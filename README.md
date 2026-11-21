@@ -11,6 +11,7 @@
 
 <p align="center">
   <a href="../../releases/latest"><b>Download</b></a> ·
+  <a href="#what-it-changes-in-game">What it changes</a> ·
   <a href="#quick-start">Quick start</a> ·
   <a href="#whats-different">What's different</a> ·
   <a href="#faq">FAQ</a> ·
@@ -22,6 +23,17 @@
 </p>
 
 FrostTablet is a fork of OpenTabletDriver 0.6.x. It keeps everything OTD can do (every supported tablet, all your plugins and filters, your existing settings) and adds a lower-latency input path on Windows, a new interface and a single-file build.
+
+## What it changes in game
+
+- **Clicks don't fire before the cursor moves.** With the pen tip bound to Z/X, stock OTD sent the key before the cursor update, so taps landed on the previous position. FrostTablet moves first, then clicks, so taps on fast jumps and streams count where the pen actually is.
+- **Pixel-exact cursor.** Stock OTD put about 8% of positions one pixel off. FrostTablet puts them on the exact pixel.
+- **Steadier latency.** Windows no longer throttles the driver, and the input thread gets game-level priority, so there are fewer random hitches when Discord or a browser is busy.
+- **Smoother interpolating filters** (Antichatter and similar), thanks to a precise timer.
+- **No stuck keys** after unplugging, the cursor follows resolution changes, and a **disable pen buttons** switch.
+- **See your real report rate in Hz** and the driver's own latency.
+
+It won't hand you +50pp. It makes hits register more honestly and keeps latency more stable.
 
 ## Download
 
@@ -183,7 +195,18 @@ Pushing a tag like `v1.0.1` builds every platform on GitHub Actions and publishe
 
 Язык (9 языков) и тема (луна или солнце) переключаются внизу слева. Пресеты, плагины, отладчик и справка спрятаны под кнопкой **⋯** справа вверху.
 
-### Что улучшено
+### Что это даёт в игре
+
+- **Клик больше не раньше курсора.** В стоке Z/X срабатывали раньше, чем курсор доезжал, и тап засчитывался на прошлой позиции. Теперь сначала движение, потом клик: на прыжках и стримах попадания честнее.
+- **Курсор ставится точно в пиксель.** В стоке примерно 8% позиций уезжали на 1 px, теперь 0.
+- **Стабильнее задержка.** Windows больше не урезает драйвер, а поток ввода получает игровой приоритет: меньше подлагов, когда в фоне Discord или браузер.
+- **Ровнее работают фильтры** (Antichatter и подобные) благодаря точному таймеру.
+- **Не залипают клавиши**, драйвер сам подхватывает смену разрешения, есть кнопка **«Отключить кнопки пера»**.
+- **Видны реальные герцы планшета** и задержка драйвера.
+
+Чудес не жди, это не «+50 pp». Но попадания честнее, а задержка стабильнее.
+
+### Что улучшено (подробнее)
 
 - **Клик больше не раньше движения.** Если кончик пера забинжен на клавишу, нажатие раньше уходило в систему до того, как курсор переедет. Теперь сначала движение, потом клик.
 - **Точный пиксель.** Раньше примерно 8% позиций курсора попадали на пиксель левее или выше нужного.
