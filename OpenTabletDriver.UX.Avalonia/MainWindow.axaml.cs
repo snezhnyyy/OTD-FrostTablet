@@ -102,7 +102,7 @@ public partial class MainWindow : Window
         LanguageChevron.Content = Icons.Create(Icons.ChevronDown, 14);
         MoreButton.Content = Icons.Create(Icons.More);
         MoreButton.Click += (_, _) => moreMenu.ShowAt(MoreButton);
-        VersionText.Text = typeof(OpenTabletDriver.Desktop.Settings).Assembly.GetName().Version?.ToString(3) + " custom";
+        VersionText.Text = $"{Program.FrostVersion} · OTD {typeof(OpenTabletDriver.Desktop.Settings).Assembly.GetName().Version?.ToString(3)}";
         Navigation.SelectionChanged += (_, _) =>
         {
             if (!refreshing && Navigation.SelectedIndex >= 0)

@@ -30,8 +30,7 @@ internal sealed class DaemonClient() : RpcClient<IDriverDaemon>("OpenTabletDrive
 
     public void StartLocalDaemon()
     {
-        if (!(OperatingSystem.IsWindows() || OperatingSystem.IsMacOS()) ||
-            ownedProcess is { HasExited: false } || OpenTabletDriver.Instance.Exists("OpenTabletDriver.Daemon")) return;
+        if (ownedProcess is { HasExited: false } || OpenTabletDriver.Instance.Exists("OpenTabletDriver.Daemon")) return;
         // Prefer a separate daemon executable next to us (development layout), else run ourselves as the daemon.
         var separate = Path.Combine(AppContext.BaseDirectory, OperatingSystem.IsWindows()
             ? "OpenTabletDriver.Daemon.exe" : "OpenTabletDriver.Daemon");

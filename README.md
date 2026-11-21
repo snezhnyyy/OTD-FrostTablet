@@ -1,179 +1,200 @@
-[![GitHub Actions Status](https://github.com/OpenTabletDriver/OpenTabletDriver/actions/workflows/dotnet.yml/badge.svg)](https://github.com/OpenTabletDriver/OpenTabletDriver/actions/workflows/dotnet.yml) [![Total Download Count](https://img.shields.io/github/downloads/OpenTabletDriver/OpenTabletDriver/total.svg)](https://github.com/OpenTabletDriver/OpenTabletDriver/releases/latest)
-
-# OpenTabletDriver
-
-English | [한국어](docs/README_KO.md) | [Español](docs/README_ES.md) | [Русский](docs/README_RU.md) | [简体中文](docs/README_CN.md) | [Français](docs/README_FR.md) | [Deutsch](docs/README_DE.md) | [Português-BR](docs/README_PTBR.md) | [Tiếng Việt](docs/README_VN.md)
-
-OpenTabletDriver is an open source, cross platform, user mode tablet driver. The goal of OpenTabletDriver is to be as cross platform as possible with the highest compatibility in an easily configurable graphical user interface.
-
-<p align="middle">
-  <img src="https://i.imgur.com/XDYf62e.png" width="410" align="middle"/>
-  <img src="https://i.imgur.com/jBW8NpU.png" width="410" align="middle"/>
-  <img src="https://i.imgur.com/ZLCy6wz.png" width="410" align="middle"/>
+<p align="center">
+  <img src="docs/frost/icon.png" width="112" alt="FrostTablet icon">
 </p>
 
-# Supported Tablets
+<h1 align="center">FrostTablet</h1>
 
-The status of all supported tablets can be seen here.
+<p align="center">
+  A faster, cleaner <a href="https://github.com/OpenTabletDriver/OpenTabletDriver">OpenTabletDriver</a> for osu! and everyday pen work.<br>
+  <sub>by tgk: snezhnyyy · and claude ^^</sub>
+</p>
 
-- [Supported Tablets](https://opentabletdriver.net/Tablets)
+<p align="center">
+  <a href="../../releases/latest"><b>Download</b></a> ·
+  <a href="#quick-start">Quick start</a> ·
+  <a href="#whats-different">What's different</a> ·
+  <a href="#faq">FAQ</a> ·
+  <a href="#русский">Русский</a>
+</p>
 
-# Installation
+<p align="center">
+  <img src="docs/frost/output-dark.png" alt="FrostTablet output page, dark theme" width="880">
+</p>
 
-- [Windows](https://opentabletdriver.net/Wiki/Install/Windows)
-- [Linux](https://opentabletdriver.net/Wiki/Install/Linux)
-- [MacOS](https://opentabletdriver.net/Wiki/Install/MacOS)
+FrostTablet is a fork of OpenTabletDriver 0.6.x. It keeps everything OTD can do (every supported tablet, all your plugins and filters, your existing settings) and adds a lower-latency input path on Windows, a new interface and a single-file build.
 
-# Troubleshooting
+## Download
 
-Please see our [website wiki](https://opentabletdriver.net/Wiki) for common issues and other quirks.
+Grab the file for your system from the **[latest release](../../releases/latest)**:
 
-# Running OpenTabletDriver binaries
+| System | File | Status |
+| --- | --- | --- |
+| Windows 10/11 (most PCs) | `FrostTablet-…-win-x64.zip` | ✅ Tested daily |
+| Windows on ARM | `FrostTablet-…-win-arm64.zip` | Builds, not tested on hardware |
+| Linux (x64) | `FrostTablet-…-linux-x64.tar.gz` | Experimental |
+| Linux (ARM64) | `FrostTablet-…-linux-arm64.tar.gz` | Experimental |
+| macOS (Apple Silicon) | `FrostTablet-…-osx-arm64.tar.gz` | Experimental |
+| macOS (Intel) | `FrostTablet-…-osx-x64.tar.gz` | Experimental |
 
-OpenTabletDriver functions as two separate processes that interact with each other seamlessly. The active program that does all of the tablet data handling is `OpenTabletDriver.Daemon`, while the GUI frontend is `OpenTabletDriver.UX.*`, where `*` depends on your platform<sup>1</sup>. The daemon must be started in order for anything to work, however the GUI is unnecessary. If you have existing settings, they should apply when the daemon starts.
+Each download is **one program file**: the interface and the driver live in the same executable, and .NET is included. There's nothing else to install.
 
-> <sup>1</sup>Windows uses `Wpf`, Linux uses `Gtk`, and MacOS uses `MacOS` respectively. This for the most part can be ignored if you don't build it from source as only the correct version will be provided.
+## Quick start
 
-## Building OpenTabletDriver from source
+### Windows
 
-The requirements to build OpenTabletDriver are consistent across all platforms. Running OpenTabletDriver on each platform requires different dependencies.
+1. **Close any other tablet driver.** That means OpenTabletDriver (tray icon → Exit), Wacom/Huion/XP-Pen drivers and other copies of FrostTablet. Two drivers can't use one tablet at the same time.
+2. Unzip the download anywhere you like, for example `Desktop\FrostTablet`.
+3. Run **`FrostTablet.exe`**. If Windows SmartScreen warns about an unknown app, click *More info → Run anyway*. The app isn't code-signed yet.
+4. Plug in your tablet. It's detected automatically, or press **Detect** at the top right.
 
-### All platforms
+**Coming from OpenTabletDriver?** FrostTablet reads your settings and plugins from the same place (`%LOCALAPPDATA%\OpenTabletDriver`), so your area, filters and bindings are already there.
 
-- .NET 10 SDK (can be obtained from [here](https://dotnet.microsoft.com/download/dotnet/10.0) - You want the SDK for your platform, Linux users should install via package manager where possible)
+**Portable mode:** create a folder named `userdata` next to `FrostTablet.exe`. Settings and plugins are then kept there instead, and your normal OTD setup stays untouched.
 
-#### Windows
+### Linux (experimental)
 
-Run `build.sh windows` to produce binary builds to 'bin' folder. These builds will run in portable mode by default.
+```bash
+tar -xzf FrostTablet-*-linux-x64.tar.gz
+cd FrostTablet-*-linux-x64
+./install.sh        # one time: udev rules, uinput, unloads conflicting kernel drivers (asks for sudo)
+./FrostTablet
+```
 
-If you don't have WSL or some other way to access BASH with a working dotnet install, the deprecated Windows build script still exists in `build.ps1`.
+### macOS (experimental)
 
-#### Linux
+```bash
+tar -xzf FrostTablet-*-osx-arm64.tar.gz
+cd FrostTablet-*-osx-arm64
+xattr -dr com.apple.quarantine FrostTablet   # the build isn't notarized
+./FrostTablet
+```
 
-Required packages (some packages may be pre-installed for your distribution):
+macOS will ask for **Accessibility** and **Input Monitoring** permissions the first time. Allow both in *System Settings → Privacy & Security*.
 
-- libx11
-- libxrandr
-- libevdev2
-- GTK+3
+## First setup for osu!
 
-Run `./eng/bash/package.sh`. If a "package" build is desired,
-there are official support for the following packaging formats:
+1. **Output → Tablet area.** Drag the pink rectangle or type exact values (millimetres). *Full area* and *Center* are one click away.
+2. **Output → Screen area.** Usually your main monitor: click *Monitor 1*.
+3. **Bindings → Pen tip.** Pick *Mouse button → Left*, or a key such as `Z` if you tap with the pen.
+4. **Bindings → Pen buttons → Disable pen buttons** if you keep pressing the barrel buttons by accident.
+5. **Filters** (optional): smoothing plugins such as Radial Follow or Devocub Antichatter. Install more from **⋯ → Plugin manager**.
+6. When you change something, a bar slides in at the bottom:
+   - **Apply** tries the change right now. It's lost when the driver restarts.
+   - **Save** applies and keeps it.
+   - **Reset** goes back to what you had.
 
-| Package Format | Command |
+Change the **language** (9 languages) and **theme** (moon/sun) at the bottom left. Presets, plugins, the tablet debugger and help are behind **⋯** at the top right.
+
+<p align="center">
+  <img src="docs/frost/bindings-light.png" alt="Bindings page, light theme" width="49%">
+  <img src="docs/frost/debugger.png" alt="Tablet debugger with live report rate" width="49%">
+</p>
+
+## What's different
+
+### Input and latency (Windows)
+
+| Change | Why it matters |
 | --- | --- |
-| Generic binary tarball (`.tar.gz`) | `./eng/bash/package.sh --package BinaryTarBall` |
-| [Simple binary package](./eng/bash/Simple/README-SimplePackage.md) (`.tar.gz`) | `./eng/bash/package.sh --package Simple` |
-| Debian package (`.deb`) | `./eng/bash/package.sh --package Debian` |
-| Red Hat package (`.rpm`) | `./eng/bash/package.sh --package RedHat` |
-| Generic package (for package maintainers) | `./eng/bash/package.sh --package Generic` |
+| **Click no longer fires before the cursor moves.** Bindings run after the new cursor position is sent. | With the pen tip on `Z`/`X`, stock OTD sent the key a report earlier than the cursor move, so taps could register at the previous position. |
+| **Pixel-exact cursor.** The absolute-position math is fixed, and sub-pixel precision is kept for raw-input games. | Stock OTD put about 8% of positions one pixel left or up (measured: 156 of 2000 vs 0 of 2000). Addresses upstream #1071. |
+| **High-resolution timer** for interpolating filters. It runs on its own MMCSS thread, and fractional rates like 333 Hz or 2000 Hz now work. | At 1000 Hz, 99th-percentile tick lateness dropped from ~1.2 ms to ~0.35 ms. A float-precision bug that made the old fallback timer drift after a few hours is fixed. |
+| **The reader thread is boosted (MMCSS)**, and Windows is told not to throttle the driver (EcoQoS / E-cores, timer resolution). | Steadier latency, especially on Intel 12th gen and newer hybrid CPUs. |
+| **Key bindings send real scan codes**, including the extended-key flag. | Games that read raw keyboard input see the key. Arrows and PgUp/PgDn work with NumLock on (upstream #3208). |
+| **Follows resolution and monitor changes** live. | Games switching resolution no longer offset the cursor (upstream #1143). |
+| **No stuck keys.** Everything held is released when the tablet is unplugged or settings are applied. | Upstream #2957. |
+| **Less work per report.** HID buffers are reused, and the debugger is serialized off the input thread. | Processing costs about 40 ns per report. The input path never waits for the debugger. |
+| **Built-in latency stats.** Once a minute the Console shows the real report rate, interval jitter and driver processing time. | Shows whether your tablet (or its overclock) really runs at the rate you think. |
 
-The generic binary tarball is designed to be extracted from the root directory.
+### Interface
 
-The simple package should only be used for testing new features on existing
-installs, as it does not install necessary system files.
+- A completely new app: dark and light themes, a sidebar, live tablet and monitor previews with drafting-style dimensions, and compact number fields (arrow keys and mouse wheel adjust values, Shift for ×10).
+- **9 languages:** English, Русский, Українська, Español, Português, Deutsch, Français, 中文, 日本語.
+- **Disable pen buttons** switch. Your bindings are kept.
+- A clear **Reset / Apply / Save** bar that only appears when something changed.
+- A redesigned tablet debugger with live report rate in Hz, interval, pressure and position.
+- Updates are checked against **this** repository, never against upstream. Installing upstream would replace FrostTablet.
+- One self-contained executable instead of ~260 files.
 
-You can also run `./build.sh linux` to generate files into `bin/`, but this does not include system files.
+## FAQ
 
-#### MacOS
+**Will my OpenTabletDriver plugins work?** Yes. FrostTablet is OTD 0.6.x inside, and plugins built for 0.6 load as usual.
 
-A newer version of Bash and Coreutils is required to build OpenTabletDriver. You can install them using Homebrew.
-Run `PATH="$(brew --prefix coreutils)/libexec/gnubin:$PATH" $(brew --prefix)/bin/bash ./eng/bash/package.sh -r osx-x64`.
+**My tablet isn't detected.** Make sure no other tablet driver is running, including OTD in the tray and vendor drivers, then press **Detect**. The status at the bottom left says *Another driver is running* if a different OTD daemon is active.
 
-| Package Format | Command |
-| --- | --- |
-| Unsigned x64 Package | `./eng/bash/package.sh --runtime osx-x64 --package macos` |
-| Signed x64 Package | `./eng/bash/package.sh --signed true --runtime osx-x64 --package macos` |
-| Signed arm64 Package | `./eng/bash/package.sh --signed true --runtime osx-arm64 --package macos` |
+**How do I go back to OpenTabletDriver?** Exit FrostTablet from the tray and start OTD. Your settings stay compatible.
 
-Packaging signed MacOS builds on Linux or Windows requires `rcodesign`.
+**Where are my settings?** In `%LOCALAPPDATA%\OpenTabletDriver` (Windows), `~/.config/OpenTabletDriver` (Linux) or `~/Library/Application Support/OpenTabletDriver` (macOS). In portable mode they're in the `userdata` folder next to the executable.
 
-As of [MacOS 11](https://developer.apple.com/documentation/macos-release-notes/macos-big-sur-11_0_1-universal-apps-release-notes/#Code-Signing), you **must** sign arm64 packages.
+**What do the Performance lines in the Console mean?** For example: `1000 reports/s, interval p50 1000 µs / p99 1060 µs, pipeline p50 6 µs / p99 18 µs`. That's the real report rate, how even the reports are, and how long FrostTablet itself takes per report.
 
-# Features
+**Is this affiliated with OpenTabletDriver?** No. It's a community fork. Report FrostTablet bugs **here**, not upstream.
 
-- Fully platform-native GUI
-  - Windows: `Windows Presentation Foundation`
-  - Linux: `GTK+3`
-  - MacOS: `MonoMac`
-- Multi-tablet support
-  - Handles multiple tablets from a large selection of models and
-    manufacturers, each with its own plugin pipeline and settings
-- Validated tablet specifications, ensuring the smoothest transition if
-  switching tablets
-- Fully fledged console tool
-  - Quickly acquire, change, load, or save settings
-  - Scripting support (json output)
-- Absolute cursor positioning
-  - Screen area and tablet area
-  - Center-anchored offsets
-  - Precise area rotation
-- Relative cursor positioning
-  - px/mm horizontal and vertical sensitivity
-- Advanced tablet feature compatibility
-  - Pressure output
-    - Windows: Needs Windows Ink OpenTabletDriver plugin for Windows Ink output
-      mode, and VMulti system driver
-    - Linux: Natively supported with "Linux Artist Mode" output mode
-    - MacOS: Natively supported in all output modes
-  - Pen tilt
-  - Tablet pad wheels/dials
-  - Auxiliary/Express Keys
-- Pen bindings
-  - Tip by pressure bindings
-  - Express ("Aux") key bindings
-  - Pen button bindings
-  - Mouse button bindings
-  - Wheel bindings
-  - Keyboard bindings
-  - Preset bindings
-  - External plugin bindings
-- Saving and loading settings
-  - Persistent settings
-  - Presets for quick-access to prior saved settings
-- Plugins
-  - Plugin Manager (via
-    [Plugin-Repository](https://github.com/OpenTabletDriver/Plugin-Repository))
-  - Filters, including asynchronous filters (interpolators)
-  - Output modes
-- Device debugging tools
-  - Tablet data analyzer ("Tablet Debugger")
-  - USB Device String readings
-- Automatic version update notification
-  - Can be disabled with `--skipupdate` command line flag
-- Vendor driver area conversions
-  - Supports transforming your Wacom / XP-Pen / Huion / Gaomon / VEIKK area
-- Standalone daemon, for low-spec or headless systems.
+## Building from source
 
-# Contributing to OpenTabletDriver
+Requires the [.NET 10 SDK](https://dotnet.microsoft.com/download).
 
-If you wish to contribute to OpenTabletDriver, check out the [issue
-tracker](https://github.com/OpenTabletDriver/OpenTabletDriver/issues). When
-creating pull requests, follow the guidelines outlined in our [contribution
-guidelines](CONTRIBUTING.md).
+```bash
+git clone https://github.com/snezhnyyy/OTD-FrostTablet
+cd OTD-FrostTablet
+dotnet run --project OpenTabletDriver.UX.Avalonia -c Release
+# single-file release build:
+dotnet publish OpenTabletDriver.UX.Avalonia -c Release -r win-x64 --self-contained \
+  -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true
+```
 
-If you have any issues or suggestions, [open an issue
-ticket](https://github.com/OpenTabletDriver/OpenTabletDriver/issues/new/choose)
-and fill out the template with relevant information. We welcome both bug
-reports, as well as new tablets to add support for. In many cases adding support
-for a new tablet is quite easy.
+Pushing a tag like `v1.0.1` builds every platform on GitHub Actions and publishes a release (`.github/workflows/frost-release.yml`).
 
-For issues and PRs related to OpenTabletDriver's [web page](https://opentabletdriver.net), see the repository [here](https://github.com/OpenTabletDriver/opentabletdriver.github.io).
+## Credits and license
 
-### Supporting a new tablet
+- **[OpenTabletDriver](https://github.com/OpenTabletDriver/OpenTabletDriver)** by InfinityGhost, X9VoiD and contributors. FrostTablet is built on it and remains under **LGPL-3.0**, see [LICENSE](LICENSE).
+- [Avalonia](https://avaloniaui.net) (MIT), [Inter](https://rsms.me/inter/) font (OFL), [Lucide](https://lucide.dev) icons (ISC).
+- Visual direction guided by *unslop* by Damir Sokolovsky ([@heydamir](https://x.com/heydamir)), CC BY 4.0.
+- **AI disclosure:** large parts of this fork were written with AI assistance (Claude, with help from Codex), directed and tested by snezhnyyy.
 
-If you'd like us to add support for a new tablet, open an issue or join our
-[discord](https://discord.gg/9bcMaPkVAR) asking for support. *We generally
-prefer that adding support for a tablet be done through discord, due to the
-back-and-forth involved*.
+---
 
-We'll have you do a few things like making a recording of the data sent by your
-tablet using our built-in tablet debugging tool, testing features of the tablet
-(on-tablet buttons, pen buttons, pen pressure, etc) with different configs we'll
-send you to try.
+## Русский
 
-You're also of course welcome to open a PR adding support for it yourself, if
-you have a good grasp on what's involved.
+**FrostTablet** — это форк OpenTabletDriver 0.6.x. Он умеет всё то же, что OTD: поддерживает все планшеты, работает с твоими плагинами, фильтрами и настройками. Сверху добавлены ускоренный ввод на Windows, новый интерфейс и сборка одним файлом.
 
-Generally this process is relatively easy, especially if it's for a tablet
-manufacturer we already have support for on other tablets.
+### Установка (Windows)
+
+1. **Закрой все другие драйверы планшета**: OpenTabletDriver (трей → выход), драйверы Wacom, Huion, XP-Pen и другие копии FrostTablet.
+2. Скачай `FrostTablet-…-win-x64.zip` из **[последнего релиза](../../releases/latest)** и распакуй куда угодно.
+3. Запусти **`FrostTablet.exe`**. Если SmartScreen ругается, нажми *Подробнее → Выполнить в любом случае*: у программы пока нет цифровой подписи.
+4. Подключи планшет. Он найдётся сам, а если нет, нажми **«Найти планшет»** справа вверху.
+
+**Переходишь с OpenTabletDriver?** FrostTablet берёт настройки и плагины из того же места (`%LOCALAPPDATA%\OpenTabletDriver`), так что область, фильтры и бинды уже на месте.
+
+**Портативный режим:** создай рядом с `FrostTablet.exe` папку `userdata`. Тогда настройки будут храниться в ней, а обычный OTD останется нетронутым.
+
+### Первая настройка под osu!
+
+1. **Вывод → Область планшета.** Перетащи розовый прямоугольник или введи точные размеры в миллиметрах.
+2. **Вывод → Область экрана.** Обычно достаточно нажать «Монитор 1».
+3. **Привязки → Кончик пера.** Выбери «Кнопка мыши → Left» или клавишу, например `Z`.
+4. **Привязки → Кнопки пера → «Отключить кнопки пера»**, если случайно жмёшь кнопки на корпусе.
+5. **Фильтры** (по желанию): Radial Follow, Antichatter и другие. Новые ставятся через **⋯ → Менеджер плагинов**.
+6. Когда что-то меняешь, снизу выезжает панель:
+   - **«Применить»** пробует изменения сейчас, но после перезапуска драйвера они пропадут.
+   - **«Сохранить»** применяет и оставляет навсегда.
+   - **«Сбросить»** возвращает как было.
+
+Язык (9 языков) и тема (луна или солнце) переключаются внизу слева. Пресеты, плагины, отладчик и справка спрятаны под кнопкой **⋯** справа вверху.
+
+### Что улучшено
+
+- **Клик больше не раньше движения.** Если кончик пера забинжен на клавишу, нажатие раньше уходило в систему до того, как курсор переедет. Теперь сначала движение, потом клик.
+- **Точный пиксель.** Раньше примерно 8% позиций курсора попадали на пиксель левее или выше нужного.
+- **Точный таймер** для фильтров с интерполяцией, плюс приоритет MMCSS для потока ввода. Windows больше не урезает драйверу производительность и не загоняет его на E-ядра.
+- **Настоящие сканкоды клавиш.** Игры с raw input видят нажатия, а стрелки работают при включённом NumLock.
+- **Смена разрешения экрана подхватывается на лету.** Залипших клавиш при отключении планшета больше нет.
+- **В «Консоли» раз в минуту видна реальная частота планшета и задержка драйвера.** Удобно проверить, работает ли разгон до 1000 Гц.
+
+### Частые вопросы
+
+- **Плагины от OTD работают?** Да, внутри FrostTablet всё тот же OTD 0.6.
+- **Планшет не находится.** Проверь, что не запущен другой драйвер, и нажми «Найти планшет». Внизу слева будет написано «Работает другой драйвер», если мешает чужой OTD.
+- **Как вернуться на OTD?** Закрой FrostTablet из трея и запусти OTD. Настройки совместимы.
+- **Куда писать о багах?** В Issues **этого** репозитория, а не в оригинальный OTD.

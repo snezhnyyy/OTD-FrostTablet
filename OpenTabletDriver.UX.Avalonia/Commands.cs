@@ -75,7 +75,7 @@ public partial class MainWindow
                 Item("Debugger", Debugger), Item("StringReader", () => DeviceTool(false)), Item("InitSender", () => DeviceTool(true))));
         }
         var help = new MenuItem { Header = T("Help") };
-        help.Items.Add(Item("Wiki", Run(() => DesktopInterop.Open("https://opentabletdriver.net/Wiki"))));
+        help.Items.Add(Item("Wiki", Run(() => DesktopInterop.Open(Program.RepositoryUrl + "#readme"))));
         help.Items.Add(Item("Guide", Guide));
         help.Items.Add(Item("About", About, "F1"));
         if (settings != null)
@@ -164,18 +164,43 @@ public partial class MainWindow
     private async Task About()
     {
         using var reader = new StreamReader(typeof(App).Assembly.GetManifestResourceStream("LICENSE")!);
-        await Dialog("About", $"OpenTabletDriver {typeof(App).Assembly.GetName().Version}\n\n{await reader.ReadToEndAsync()}");
+        await Dialog("About", $"FrostTablet {Program.FrostVersion} — by tgk: snezhnyyy and claude ^^\n" +
+            $"Based on OpenTabletDriver {typeof(OpenTabletDriver.Desktop.Settings).Assembly.GetName().Version?.ToString(3)} (LGPL-3.0)\n" +
+            $"{Program.RepositoryUrl}\n\n{await reader.ReadToEndAsync()}");
     }
 
+    /// <summary>
+    /// Checks this fork's GitHub releases. The daemon's built-in updater targets upstream OpenTabletDriver
+    /// and would replace FrostTablet with it, so it is never used here.
+    /// </summary>
     private async Task Updates(bool manual)
     {
-        var update = await Driver.CheckForUpdates();
-        if (update == null)
+        try
         {
-            if (manual) await Dialog("Updates", T("UpToDate"));
+            using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(8) };
+            http.DefaultRequestHeaders.UserAgent.ParseAdd("FrostTablet/" + Program.FrostVersion);
+            http.DefaultRequestHeaders.Accept.ParseAdd("application/vnd.github+json");
+            using var doc = System.Text.Json.JsonDocument.Parse(await http.GetStringAsync(
+                "https://api.github.com/repos/snezhnyyy/OTD-FrostTablet/releases/latest"));
+            var tag = doc.RootElement.GetProperty("tag_name").GetString() ?? "";
+            var url = doc.RootElement.GetProperty("html_url").GetString() ?? Program.RepositoryUrl + "/releases";
+            var latest = Version.TryParse(tag.TrimStart('v', 'V').Split('-')[0], out var v) ? v : null;
+            if (latest != null && latest > Version.Parse(Program.FrostVersion))
+            {
+                if (await Dialog("Updates", string.Format(T("UpdateAvailable"), latest), true))
+                    DesktopInterop.Open(url);
+            }
+            else if (manual)
+                await Dialog("Updates", T("UpToDate"));
         }
-        else if (await Dialog("Updates", string.Format(T("InstallUpdate"), update.Version), true))
-            await Driver.InstallUpdate();
+        catch (Exception) when (!manual)
+        {
+            // offline or rate limited: stay quiet on the automatic check
+        }
+        catch (Exception ex)
+        {
+            await Dialog("Updates", T("UpdateCheckFailed") + Environment.NewLine + ex.Message);
+        }
     }
 
     private void RenderLog()

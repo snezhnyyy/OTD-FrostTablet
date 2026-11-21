@@ -1,0 +1,99 @@
+name: FrostTablet Release
+
+# Push a tag like "v1.0.0" to build every platform and publish a GitHub release.
+# "Run workflow" (manual) builds everything and uploads the files as workflow artifacts only.
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: ${{ matrix.rid }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { rid: win-x64,     os: windows-latest, r2r: true }
+          - { rid: win-arm64,   os: windows-latest, r2r: false }
+          - { rid: linux-x64,   os: ubuntu-latest,  r2r: true }
+          - { rid: linux-arm64, os: ubuntu-latest,  r2r: false }
+          - { rid: osx-x64,     os: macos-latest,   r2r: false }
+          - { rid: osx-arm64,   os: macos-latest,   r2r: true }
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Publish (single file, self-contained)
+        run: |
+          dotnet publish OpenTabletDriver.UX.Avalonia -c Release -r ${{ matrix.rid }} --self-contained true \
+            -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true \
+            -p:EnableCompressionInSingleFile=true -p:PublishReadyToRun=${{ matrix.r2r }} \
+            -p:DebugType=none -o out
+
+      - name: Package
+        run: |
+          version="${GITHUB_REF_NAME}"
+          [[ "$GITHUB_REF_TYPE" == "tag" ]] || version="dev"
+          name="FrostTablet-${version}-${{ matrix.rid }}"
+          mkdir -p "stage/$name" dist
+          rm -f out/*.runtimeconfig.json
+          case "${{ matrix.rid }}" in
+            win-*)
+              cp out/OpenTabletDriver.UX.exe "stage/$name/FrostTablet.exe"
+              cp docs/frost/README-windows.txt "stage/$name/README.txt"
+              (cd stage && 7z a -tzip "../dist/$name.zip" "$name" > /dev/null)
+              ;;
+            linux-*)
+              cp out/OpenTabletDriver.UX "stage/$name/FrostTablet"
+              chmod +x "stage/$name/FrostTablet"
+              sudo apt-get install -y jq > /dev/null
+              ./generate-rules.sh > "stage/$name/70-opentabletdriver.rules"
+              cp docs/frost/linux/* "stage/$name/"
+              chmod +x "stage/$name/install.sh"
+              cp docs/frost/README-linux.txt "stage/$name/README.txt"
+              tar -C stage -czf "dist/$name.tar.gz" "$name"
+              ;;
+            osx-*)
+              cp out/OpenTabletDriver.UX "stage/$name/FrostTablet"
+              chmod +x "stage/$name/FrostTablet"
+              cp docs/frost/README-macos.txt "stage/$name/README.txt"
+              tar -C stage -czf "dist/$name.tar.gz" "$name"
+              ;;
+          esac
+          ls -la dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: FrostTablet-${{ matrix.rid }}
+          path: dist/*
+
+  release:
+    name: Publish release
+    needs: build
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Checksums
+        run: cd dist && sha256sum * > SHA256SUMS.txt && cat SHA256SUMS.txt
+      - uses: softprops/action-gh-release@v2
+        with:
+          name: FrostTablet ${{ github.ref_name }}
+          body_path: docs/frost/RELEASE_NOTES.md
+          files: dist/*

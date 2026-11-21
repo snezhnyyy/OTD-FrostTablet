@@ -8,6 +8,10 @@ internal static class Program
 {
     private const string Pipe = "OpenTabletDriver.UX.Avalonia.Singleton";
     internal static string[] Options { get; set; } = [];
+
+    /// <summary>FrostTablet release version (the driver core keeps the upstream OpenTabletDriver version).</summary>
+    internal const string FrostVersion = "1.0.0";
+    internal const string RepositoryUrl = "https://github.com/snezhnyyy/OTD-FrostTablet";
     /// <summary>Rendering off-screen (UI snapshots): no tray icon, no window activation.</summary>
     internal static bool Headless { get; set; }
 

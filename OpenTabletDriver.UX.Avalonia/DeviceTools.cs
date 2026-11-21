@@ -210,7 +210,14 @@ public partial class MainWindow
             if (vm.ReportData is not { } reportData) return;
             deviceName.Text = vm.DeviceName;
             recorded.Text = vm.DataRecordingEnabled ? string.Format(T("DbgRecorded"), vm.ReportsRecorded) : "";
-            if (double.TryParse(vm.ReportRateString, System.Globalization.NumberStyles.Float, culture, out var hz) && double.IsFinite(hz) && hz > 0)
+            if (double.TryParse(vm.ReportRateString, System.Globalization.NumberStyles.Float, culture, out var hz) && double.IsFinite(hz) && hz < 1)
+            {
+                rate.Text = "—";
+                interval.Text = "—";
+                rateSub.Text = T("DbgIdle");
+                intervalSub.Text = "";
+            }
+            else if (double.IsFinite(hz) && hz > 0)
             {
                 rate.Text = $"{hz:0} {T("UnitHz")}";
                 rateSub.Text = T("DbgRateHint");
