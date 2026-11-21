@@ -10,6 +10,7 @@
 | Gaomon 1060 Pro                    |     Supported     |
 | Gaomon GM116HD                     |     Supported     |
 | Gaomon GM156HD                     |     Supported     |
+| Gaomon GM156HD (16K)               |     Supported     |
 | Gaomon M5                          |     Supported     |
 | Gaomon M5 V2                       |     Supported     |
 | Gaomon M7                          |     Supported     |
@@ -39,6 +40,7 @@
 | Huion H641P                        |     Supported     |
 | Huion H642                         |     Supported     |
 | Huion H950P                        |     Supported     |
+| Huion H950P (16K)                  |     Supported     |
 | Huion H951P                        |     Supported     | Group keys act like auxiliary buttons
 | Huion HS64                         |     Supported     |
 | Huion HS95                         |     Supported     |
@@ -242,7 +244,7 @@
 | Huion H690                         |    Has Quirks     | Windows: Requires Zadig's WinUSB to be installed on interface 0
 | Huion H1061P                       |    Has Quirks     | Group keys act like auxiliary buttons.
 | Huion Kamvas 13 (Gen 3)            |    Has Quirks     | Function-switch buttons act as regular auxiliary keys.
-| Huion New 1060 Plus (2048)         |    Has Quirks     | Windows: Requires Zadig's WinUSB to be installed on interface 1
+| Huion New 1060 Plus (2048)         |    Has Quirks     | Windows: Requires Zadig's WinUSB to be installed on interface 0 or 1
 | Huion osu! Tablet                  |    Has Quirks     | Windows: Requires Zadig's WinUSB to be installed on interface 0. Uses the same configuration as the Huion 420.
 | Huion Q630M                        |    Has Quirks     | Aux buttons are not in order.
 | Huion WH1409 V2 (Variant 2)        |    Has Quirks     | Windows: Requires Zadig's WinUSB to be installed on interface 0

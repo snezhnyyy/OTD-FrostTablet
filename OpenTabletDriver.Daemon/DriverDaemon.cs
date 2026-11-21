@@ -28,6 +28,9 @@ using OpenTabletDriver.SystemDrivers;
 
 namespace OpenTabletDriver.Daemon
 {
+    /// <summary>
+    /// Reference implementation of <see cref="IDriverDaemon"/> which builds on top of <see cref="OpenTabletDriver.Driver"/>.
+    /// </summary>
     public class DriverDaemon : IDriverDaemon
     {
         private const string AVALONIA_REVISION = "0.7.0.0";
@@ -522,7 +525,7 @@ namespace OpenTabletDriver.Daemon
             if (pointer is IPenActionHandler penActionHandler)
                 bindingServiceProvider.AddService(() => penActionHandler);
 
-            var tip = bindingHandler.Tip = new ThresholdBindingState
+            var tip = bindingHandler.Tip = new BindingState
             {
                 Binding = settings.TipButton?.Construct<IBinding>(bindingServiceProvider, tabletReference),
             };
@@ -532,7 +535,7 @@ namespace OpenTabletDriver.Daemon
                 Log.Write(group, $"Tip Binding: [{tip.Binding}]@{settings.TipActivationThreshold}%");
             }
 
-            var eraser = bindingHandler.Eraser = new ThresholdBindingState
+            var eraser = bindingHandler.Eraser = new BindingState
             {
                 Binding = settings.EraserButton?.Construct<IBinding>(bindingServiceProvider, tabletReference),
             };
@@ -728,7 +731,7 @@ namespace OpenTabletDriver.Daemon
         public async Task<DiagnosticInfo> GetDiagnosticInfo()
         {
             var log = await GetCurrentLog();
-            return new DiagnosticInfo(log, await GetDevices());
+            return new DiagnosticInfo(log, await GetDevices(), Settings);
         }
 
         // Debug reports are serialized and sent over RPC on a background task instead of the device reader

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using OpenTabletDriver.Plugin;
 using OpenTabletDriver.Plugin.Attributes;
 using OpenTabletDriver.Plugin.Output;
@@ -9,7 +10,7 @@ using OpenTabletDriver.Plugin.Tablet.Wheel;
 
 namespace OpenTabletDriver.Desktop.Binding
 {
-    [PluginIgnore]
+    [PluginIgnore(Reason = "Initialized manually")]
     public class BindingHandler : IPositionedPipelineElement<IDeviceReport>, IDisposable
     {
         public BindingHandler(TabletReference tablet)
@@ -21,8 +22,8 @@ namespace OpenTabletDriver.Desktop.Binding
                 Wheels.Add(wheelIndex++, new WheelBindings(wheel));
         }
 
-        public ThresholdBindingState? Tip { set; get; }
-        public ThresholdBindingState? Eraser { set; get; }
+        public BindingState? Tip { set; get; }
+        public BindingState? Eraser { set; get; }
         private bool _isEraser;
 
         public Dictionary<int, BindingState?> PenButtons { set; get; } = new Dictionary<int, BindingState?>();
@@ -74,6 +75,7 @@ namespace OpenTabletDriver.Desktop.Binding
             Emit?.Invoke(report);
         }
 
+        [SuppressMessage("ReSharper", "ConvertIfStatementToSwitchStatement")]
         public void HandleBinding(IDeviceReport report)
         {
             if (report is IEraserReport eraserReport)
@@ -101,8 +103,8 @@ namespace OpenTabletDriver.Desktop.Binding
         public void ReleaseAll()
         {
             var report = new DeviceReport(Array.Empty<byte>());
-            Tip?.Invoke(tablet, report, 0f);
-            Eraser?.Invoke(tablet, report, 0f);
+            Tip?.Invoke(tablet, report, false);
+            Eraser?.Invoke(tablet, report, false);
             foreach (var collection in new[] { PenButtons, AuxButtons, MouseButtons })
                 foreach (var state in collection.Values)
                     state?.Invoke(tablet, report, false);
@@ -196,9 +198,9 @@ namespace OpenTabletDriver.Desktop.Binding
         {
             float pressurePercent = (float)report.Pressure / (float)pen.MaxPressure * 100f;
             if (_isEraser)
-                Eraser?.Invoke(tablet, report, pressurePercent);
+                Eraser?.Invoke(tablet, report, pressurePercent > 0);
             else
-                Tip?.Invoke(tablet, report, pressurePercent);
+                Tip?.Invoke(tablet, report, pressurePercent > 0);
 
             HandleBindingCollection(tablet, report, PenButtons, report.PenButtons);
         }
