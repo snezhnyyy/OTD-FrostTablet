@@ -12,6 +12,7 @@
       "OpenTabletDriver.Plugin\\OpenTabletDriver.Plugin.csproj",
       "OpenTabletDriver.Tests\\OpenTabletDriver.Tests.csproj",
       "OpenTabletDriver.UX\\OpenTabletDriver.UX.csproj",
+      "OpenTabletDriver.UX.Avalonia\\OpenTabletDriver.UX.Avalonia.csproj",
       "OpenTabletDriver.UX.Wpf\\OpenTabletDriver.UX.Wpf.csproj"
     ]
   }

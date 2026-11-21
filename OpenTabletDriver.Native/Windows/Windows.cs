@@ -32,6 +32,12 @@ namespace OpenTabletDriver.Native.Windows
 
         #region Input
 
+        public const int SM_CXVIRTUALSCREEN = 78;
+        public const int SM_CYVIRTUALSCREEN = 79;
+
+        [DllImport("user32.dll")]
+        public static extern int GetSystemMetrics(int nIndex);
+
         [DllImport("user32.dll")]
         public static extern uint SendInput(uint nInputs, [MarshalAs(UnmanagedType.LPArray), In] INPUT[] pInputs, int cbSize);
 
@@ -56,6 +62,41 @@ namespace OpenTabletDriver.Native.Windows
 
         [DllImport("winmm.dll", SetLastError = true)]
         public static extern uint timeKillEvent(uint timerEventId);
+
+        public const uint CREATE_WAITABLE_TIMER_MANUAL_RESET = 0x00000001;
+        public const uint CREATE_WAITABLE_TIMER_HIGH_RESOLUTION = 0x00000002;
+        public const uint TIMER_ALL_ACCESS = 0x001F0003;
+        public const uint INFINITE = 0xFFFFFFFF;
+        public const uint WAIT_OBJECT_0 = 0x00000000;
+
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode, EntryPoint = "CreateWaitableTimerExW")]
+        public static extern IntPtr CreateWaitableTimerEx(IntPtr lpTimerAttributes, string? lpTimerName, uint dwFlags, uint dwDesiredAccess);
+
+        /// <param name="dueTime">Negative = relative time in 100ns units.</param>
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern bool SetWaitableTimer(IntPtr hTimer, in long dueTime, int lPeriod, IntPtr pfnCompletionRoutine, IntPtr lpArgToCompletionRoutine, bool fResume);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern uint WaitForSingleObject(IntPtr hHandle, uint dwMilliseconds);
+
+        #endregion
+
+        #region MMCSS
+
+        [DllImport("avrt.dll", SetLastError = true, CharSet = CharSet.Unicode, EntryPoint = "AvSetMmThreadCharacteristicsW")]
+        public static extern IntPtr AvSetMmThreadCharacteristics(string taskName, ref uint taskIndex);
+
+        [DllImport("avrt.dll", SetLastError = true)]
+        public static extern bool AvRevertMmThreadCharacteristics(IntPtr avrtHandle);
+
+        #endregion
+
+        #region Keyboard
+
+        public const uint MAPVK_VK_TO_VSC_EX = 4;
+
+        [DllImport("user32.dll", EntryPoint = "MapVirtualKeyW")]
+        public static extern uint MapVirtualKey(uint uCode, uint uMapType);
 
         #endregion
 

@@ -508,6 +508,11 @@ namespace OpenTabletDriver.Daemon
                 _ => null
             };
 
+            // Built-in Windows SendInput pointers: move the cursor first, then fire bindings,
+            // so key bindings (e.g. pen tip -> Z/X) register at the up-to-date cursor position.
+            if (pointer is Desktop.Interop.Input.WindowsVirtualMouse windowsMouse)
+                bindingHandler.PostOutputFlushPointer = windowsMouse;
+
             if (pointer is IMouseButtonHandler mouseButtonHandler)
                 bindingServiceProvider.AddService(() => mouseButtonHandler);
 
@@ -537,7 +542,11 @@ namespace OpenTabletDriver.Daemon
                 Log.Write(group, $"Eraser Binding: [{eraser.Binding}]@{settings.EraserActivationThreshold}%");
             }
 
-            if (settings.PenButtons.Any(b => b?.Path != null))
+            if (settings.DisablePenButtons)
+            {
+                Log.Write(group, "Pen buttons are disabled");
+            }
+            else if (settings.PenButtons.Any(b => b?.Path != null))
             {
                 SetBindingHandlerCollectionSettings(bindingServiceProvider, settings.PenButtons, bindingHandler.PenButtons, tabletReference, settings.EnableDragBindings);
                 Log.Write(group, $"Pen Bindings: " + string.Join(", ", bindingHandler.PenButtons.Select(b => b.Value?.Binding)));
@@ -722,9 +731,48 @@ namespace OpenTabletDriver.Daemon
             return new DiagnosticInfo(log, await GetDevices());
         }
 
+        // Debug reports are serialized and sent over RPC on a background task instead of the device reader
+        // thread, so an open tablet debugger never adds latency to cursor output. The reader thread only takes a
+        // cheap snapshot (boxed struct copy + raw bytes), because the pipeline mutates reports after this point.
+        private readonly System.Threading.Channels.Channel<(TabletReference, IDeviceReport)> debugReports =
+            System.Threading.Channels.Channel.CreateBounded<(TabletReference, IDeviceReport)>(
+                new System.Threading.Channels.BoundedChannelOptions(512)
+                {
+                    FullMode = System.Threading.Channels.BoundedChannelFullMode.DropOldest,
+                    SingleReader = true
+                });
+        private Task? debugReportPump;
+
         private void PostDebugReport(TabletReference tablet, IDeviceReport report)
         {
-            DeviceReport?.Invoke(this, new DebugReportData(tablet, report));
+            if (DeviceReport == null)
+                return;
+
+            IDeviceReport snapshot = report;
+            if (report.GetType().IsValueType)
+            {
+                snapshot = (IDeviceReport)RuntimeHelpers.GetObjectValue(report)!; // copies the boxed struct
+                snapshot.Raw = (byte[])report.Raw.Clone();
+            }
+            else
+            {
+                // reference-type reports can't be copied generically; serialize them right here as before
+                DeviceReport?.Invoke(this, new DebugReportData(tablet, report));
+                return;
+            }
+
+            debugReports.Writer.TryWrite((tablet, snapshot));
+            if (debugReportPump != null)
+                return;
+            lock (debugReports)
+                debugReportPump ??= Task.Run(async () =>
+            {
+                await foreach (var (t, r) in debugReports.Reader.ReadAllAsync())
+                {
+                    try { DeviceReport?.Invoke(this, new DebugReportData(t, r)); }
+                    catch (Exception ex) { Log.Exception(ex); }
+                }
+            });
         }
 
         public async Task<SerializedUpdateInfo?> CheckForUpdates()
@@ -765,12 +813,19 @@ namespace OpenTabletDriver.Daemon
                 case PluginPlatform.Windows:
                     Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.High;
 
-                    if (Environment.OSVersion.Version.Build >= 22000) // Windows 11
+                    // Avoid gen0 blocking GCs in the hot input path where possible.
+                    System.Runtime.GCSettings.LatencyMode = System.Runtime.GCLatencyMode.SustainedLowLatency;
+
+                    if (Environment.OSVersion.Version.Build >= 16299) // Windows 10 1709+ (EcoQoS), Windows 11 (timer resolution)
                     {
                         unsafe
                         {
                             var state = Native.Windows.Windows.PowerThrottlingState.Create();
-                            state.ControlMask = (int)Native.Windows.Windows.PowerThrottlingStateMask.IgnoreTimerResolution;
+                            // StateMask = 0 => opt OUT of execution speed throttling (EcoQoS / E-core parking on hybrid CPUs)
+                            // and OUT of timer resolution being ignored while the process is minimized/occluded.
+                            state.ControlMask = (uint)Native.Windows.Windows.PowerThrottlingStateMask.ExecutionSpeed;
+                            if (Environment.OSVersion.Version.Build >= 22000)
+                                state.ControlMask |= (uint)Native.Windows.Windows.PowerThrottlingStateMask.IgnoreTimerResolution;
 
                             if (!Native.Windows.Windows.SetProcessInformation(
                                 Process.GetCurrentProcess().Handle,

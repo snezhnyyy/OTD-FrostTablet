@@ -25,7 +25,7 @@ namespace OpenTabletDriver.Desktop.Profiles
 
         private List<WheelBindingSettings> wheelBindings = [];
 
-        private bool disablePressure, disableTilt, disableRotation, enableDragBindings;
+        private bool disablePressure, disableTilt, disableRotation, enableDragBindings, disablePenButtons;
 
         [JsonProperty(nameof(TipActivationThreshold))]
         public float TipActivationThreshold
@@ -116,6 +116,16 @@ namespace OpenTabletDriver.Desktop.Profiles
         {
             set => this.RaiseAndSetIfChanged(ref this.disableRotation, value);
             get => this.disableRotation;
+        }
+
+        /// <summary>
+        /// Ignores all pen (barrel) buttons without discarding their configured bindings.
+        /// </summary>
+        [JsonProperty(nameof(DisablePenButtons))]
+        public bool DisablePenButtons
+        {
+            set => this.RaiseAndSetIfChanged(ref this.disablePenButtons, value);
+            get => this.disablePenButtons;
         }
 
         [JsonProperty(nameof(EnableDragBindings))]

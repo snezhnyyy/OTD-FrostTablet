@@ -1,0 +1,65 @@
+<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="TabletDriver.UI.MainWindow"
+        Title="OpenTabletDriver · by tgk: snezhnyyy" Icon="/Assets/app.ico" MinWidth="880" MinHeight="560" WindowStartupLocation="CenterScreen">
+  <Grid ColumnDefinitions="248,*">
+    <!-- sidebar -->
+    <Border Background="{DynamicResource Sidebar}" BorderBrush="{DynamicResource Hairline}" BorderThickness="0,0,1,0" Padding="12,20,12,16">
+      <DockPanel>
+        <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,*" Margin="8,0,8,24">
+          <Image Source="/Assets/app.png" Width="32" Height="32" VerticalAlignment="Top" Margin="0,2,0,0" RenderOptions.BitmapInterpolationMode="HighQuality"/>
+          <StackPanel Grid.Column="1" Margin="12,0,0,0" Spacing="2">
+            <TextBlock Text="OpenTabletDriver" FontSize="16" FontWeight="Medium"/>
+            <TextBlock x:Name="VersionText" FontFamily="{StaticResource MonoFont}" FontSize="12" Foreground="{DynamicResource TextSecondary}"/>
+            <TextBlock Text="by tgk: snezhnyyy" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,2,0,0"/>
+            <TextBlock Text="and claude ^^" FontSize="11" Foreground="{DynamicResource TextMuted}" Opacity="0.7"/>
+          </StackPanel>
+        </Grid>
+
+        <StackPanel DockPanel.Dock="Bottom" Spacing="12">
+          <Grid ColumnDefinitions="Auto,*" Margin="8,0">
+            <Ellipse x:Name="StatusDot" Width="8" Height="8" VerticalAlignment="Center" Fill="{DynamicResource Bad}"/>
+            <TextBlock x:Name="StatusText" Grid.Column="1" Classes="secondary caption" Margin="8,0,0,0" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+          </Grid>
+          <Grid ColumnDefinitions="*,8,Auto">
+            <Button x:Name="LanguageButton" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" Height="36" Padding="12,0">
+              <Grid ColumnDefinitions="Auto,*,Auto">
+                <ContentControl x:Name="LanguageIcon" VerticalAlignment="Center"/>
+                <TextBlock x:Name="LanguageText" Grid.Column="1" Margin="8,0" VerticalAlignment="Center"/>
+                <ContentControl x:Name="LanguageChevron" Grid.Column="2" VerticalAlignment="Center"/>
+              </Grid>
+            </Button>
+            <Button x:Name="ThemeButton" Grid.Column="2" Classes="icon"/>
+          </Grid>
+        </StackPanel>
+
+        <ListBox x:Name="Navigation" Classes="nav"/>
+      </DockPanel>
+    </Border>
+
+    <!-- content -->
+    <Grid Grid.Column="1" RowDefinitions="Auto,*,Auto">
+      <Grid ColumnDefinitions="*,Auto,Auto,Auto" Margin="32,24,24,16">
+        <TextBlock x:Name="PageTitle" Classes="title" VerticalAlignment="Center"/>
+        <ComboBox x:Name="Tablets" Grid.Column="1" MinWidth="220" Height="36" VerticalAlignment="Center" Margin="0,0,8,0"/>
+        <Button x:Name="Detect" Grid.Column="2" Classes="quiet" Height="36" VerticalAlignment="Center"/>
+        <Button x:Name="MoreButton" Grid.Column="3" Classes="quiet icon" Margin="4,0,0,0" VerticalAlignment="Center"/>
+      </Grid>
+      <ScrollViewer x:Name="EditorScroll" Grid.Row="1" Padding="32,0,32,32">
+        <StackPanel x:Name="Editor" Spacing="12" HorizontalAlignment="Left"/>
+      </ScrollViewer>
+      <Border x:Name="ChangesBar" Grid.Row="2" IsVisible="False" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource Hairline}" Background="{DynamicResource Sidebar}">
+        <Grid ColumnDefinitions="*,Auto" Margin="32,12,24,12">
+          <StackPanel VerticalAlignment="Center" Spacing="2">
+            <TextBlock x:Name="ChangesTitle" FontWeight="Medium"/>
+            <TextBlock x:Name="ChangesHint" Classes="muted caption" TextWrapping="Wrap"/>
+          </StackPanel>
+          <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" Margin="16,0,0,0">
+            <Button x:Name="ResetChanges" Classes="quiet"/>
+            <Button x:Name="Apply"/>
+            <Button x:Name="Save" Classes="primary"/>
+          </StackPanel>
+        </Grid>
+      </Border>
+    </Grid>
+  </Grid>
+</Window>

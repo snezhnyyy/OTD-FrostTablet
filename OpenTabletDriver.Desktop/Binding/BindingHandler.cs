@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using OpenTabletDriver.Plugin;
 using OpenTabletDriver.Plugin.Attributes;
 using OpenTabletDriver.Plugin.Output;
+using OpenTabletDriver.Plugin.Platform.Pointer;
 using OpenTabletDriver.Plugin.Tablet;
 using OpenTabletDriver.Plugin.Tablet.Wheel;
 
 namespace OpenTabletDriver.Desktop.Binding
 {
     [PluginIgnore]
-    public class BindingHandler : IPositionedPipelineElement<IDeviceReport>
+    public class BindingHandler : IPositionedPipelineElement<IDeviceReport>, IDisposable
     {
         public BindingHandler(TabletReference tablet)
         {
@@ -39,8 +40,34 @@ namespace OpenTabletDriver.Desktop.Binding
 
         public event Action<IDeviceReport?>? Emit;
 
+        /// <summary>
+        /// When set, bindings are evaluated after the report has been output (cursor already moved),
+        /// and this pointer is flushed afterwards so binding-generated mouse events are sent immediately.
+        /// </summary>
+        /// <remarks>
+        /// Bindings that inject input through a different channel than the pointer (e.g. keyboard
+        /// bindings) would otherwise be delivered to the OS <i>before</i> the cursor movement of the
+        /// same report, which makes key presses register at the previous cursor position.
+        /// Only enable for pointers whose state does not need to be combined with binding state
+        /// in a single output frame.
+        /// </remarks>
+        public ISynchronousPointer? PostOutputFlushPointer { set; get; }
+
         public void Consume(IDeviceReport? report)
         {
+            if (PostOutputFlushPointer is { } pointer)
+            {
+                Emit?.Invoke(report);
+
+                if (report != null)
+                {
+                    HandleBinding(report);
+                    pointer.Flush();
+                }
+
+                return;
+            }
+
             if (report != null)
                 HandleBinding(report);
 
@@ -65,6 +92,37 @@ namespace OpenTabletDriver.Desktop.Binding
                 HandleRelativeWheelReport(tablet, relativeWheelReport);
             if (report is OutOfRangeReport)
                 HandleOutOfRangeReport(tablet, report);
+        }
+
+        /// <summary>
+        /// Releases everything that may still be held (tip, eraser, pen/aux/mouse/wheel buttons).
+        /// Called when the pipeline is disposed: tablet disconnected or new settings applied.
+        /// </summary>
+        public void ReleaseAll()
+        {
+            var report = new DeviceReport(Array.Empty<byte>());
+            Tip?.Invoke(tablet, report, 0f);
+            Eraser?.Invoke(tablet, report, 0f);
+            foreach (var collection in new[] { PenButtons, AuxButtons, MouseButtons })
+                foreach (var state in collection.Values)
+                    state?.Invoke(tablet, report, false);
+            MouseScrollDown?.Invoke(tablet, report, false);
+            MouseScrollUp?.Invoke(tablet, report, false);
+            foreach (var wheel in Wheels.Values)
+                foreach (var state in wheel.WheelButtons.Values)
+                    state?.Invoke(tablet, report, false);
+            PostOutputFlushPointer?.Flush();
+        }
+
+        private bool _disposed;
+
+        public void Dispose()
+        {
+            if (_disposed) return;
+            _disposed = true;
+            try { ReleaseAll(); }
+            catch (Exception ex) { Log.Exception(ex); }
+            GC.SuppressFinalize(this);
         }
 
         private readonly HashSet<int> _triedRelativeWheels = [];

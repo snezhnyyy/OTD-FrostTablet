@@ -42,28 +42,29 @@ namespace OpenTabletDriver.Desktop.Interop.Timer
 
         private void ThreadMain()
         {
-            float nextNotification = 0;
-            float elapsedMilliseconds;
-
-            Stopwatch stopWatch = new Stopwatch();
-            stopWatch.Start();
+            // Absolute deadlines in Stopwatch ticks (64-bit): a float millisecond accumulator loses precision
+            // after a few hours of uptime, making the timer drift or fire continuously.
+            long freq = Stopwatch.Frequency;
+            double intervalTicks = Interval * freq / 1000.0;
+            double lateLimitTicks = IgnoreEventIfLateBy * freq / 1000.0;
+            long origin = Stopwatch.GetTimestamp();
+            long tick = 0;
 
             while (this.runTimer)
             {
-                nextNotification += Interval;
+                tick++;
+                long deadline = origin + (long)(tick * intervalTicks);
 
-                while ((elapsedMilliseconds = (float)stopWatch.Elapsed.TotalMilliseconds)
-                        < nextNotification)
+                long now;
+                while ((now = Stopwatch.GetTimestamp()) < deadline)
                 {
                     Thread.Yield();
                 }
 
-                if (elapsedMilliseconds - nextNotification >= IgnoreEventIfLateBy)
+                if (now - deadline >= lateLimitTicks)
                     continue;
                 Elapsed?.Invoke();
             }
-
-            stopWatch.Stop();
         }
 
         public void Dispose()

@@ -8,7 +8,7 @@ namespace OpenTabletDriver.Native.Windows.Input
     {
         public INPUT_TYPE type;
         public InputUnion U;
-        public static int Size => Marshal.SizeOf(typeof(INPUT));
+        public static readonly int Size = Marshal.SizeOf<INPUT>();
     }
 
     [SuppressMessage("ReSharper", "InconsistentNaming")]

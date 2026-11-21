@@ -104,12 +104,15 @@ namespace OpenTabletDriver.Devices
         protected void Main()
         {
             byte[]? data = null;
+            using var mmcss = Native.Windows.MmcssThread.Register();
+            var stats = new PipelineStats(Endpoint.FriendlyName);
             try
             {
                 Connected = true;
                 while (Connected)
                 {
                     data = ReportStream!.Read();
+                    var readTimestamp = System.Diagnostics.Stopwatch.GetTimestamp();
 
                     T? parsed;
 
@@ -129,6 +132,7 @@ namespace OpenTabletDriver.Devices
                     if (RawClone)
                         OnRawReport(report);
                     OnReport(report);
+                    stats.Record(readTimestamp, System.Diagnostics.Stopwatch.GetTimestamp());
                 }
             }
             catch (ObjectDisposedException dex)

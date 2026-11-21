@@ -10,10 +10,22 @@ namespace OpenTabletDriver.Desktop.Interop.Input.Keyboard
 
     public class WindowsVirtualKeyboard : IVirtualKeyboard
     {
+        [ThreadStatic]
+        private static INPUT[]? inputBuffer;
+
         private static void KeyEvent(string key, bool isPress)
         {
             var vk = EtoKeysymToVK[key];
-            var input = new INPUT
+
+            // Provide the hardware scan code alongside the virtual key. Without it, applications reading
+            // raw input / scan codes (SDL, many games) receive MakeCode 0 and may ignore or mis-map the key.
+            var scan = vk == 0 ? 0u : MapVirtualKey((uint)vk, MAPVK_VK_TO_VSC_EX);
+            var flags = isPress ? KEYEVENTF.KEYDOWN : KEYEVENTF.KEYUP;
+            if ((scan & 0xFF00) is 0xE000 or 0xE100)
+                flags |= KEYEVENTF.EXTENDEDKEY;
+
+            var inputs = inputBuffer ??= new INPUT[1];
+            inputs[0] = new INPUT
             {
                 type = INPUT_TYPE.KEYBD_INPUT,
                 U = new InputUnion
@@ -21,15 +33,14 @@ namespace OpenTabletDriver.Desktop.Interop.Input.Keyboard
                     ki = new KEYBDINPUT
                     {
                         wVk = (short)vk,
-                        wScan = 0,
-                        dwFlags = isPress ? KEYEVENTF.KEYDOWN : KEYEVENTF.KEYUP,
+                        wScan = (short)(scan & 0xFF),
+                        dwFlags = flags,
                         time = 0,
                         dwExtraInfo = UIntPtr.Zero
                     }
                 }
             };
 
-            var inputs = new INPUT[] { input };
             var result = SendInput((uint)inputs.Length, inputs, INPUT.Size);
             if (result != inputs.Length)
                 Log.Write("WindowsKeyboard", $"SendInput failed: {result}/{inputs.Length} events inserted", LogLevel.Error);

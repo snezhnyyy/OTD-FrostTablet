@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <AssemblyName>OpenTabletDriver.UX</AssemblyName>
+    <RootNamespace>OpenTabletDriver.UX.Avalonia</RootNamespace>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <ApplicationIcon>Assets/app.ico</ApplicationIcon>
+    <AvaloniaVersion>11.3.23</AvaloniaVersion>
+    <!-- the driver daemon is bundled into this executable and started with the daemon switch -->
+    <ValidateExecutableReferencesMatchSelfContained>false</ValidateExecutableReferencesMatchSelfContained>
+    <TieredPGO>true</TieredPGO>
+    <ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="UiSnapshot" />
+    <ProjectReference Include="../OpenTabletDriver.Desktop/OpenTabletDriver.Desktop.csproj" />
+    <ProjectReference Include="../OpenTabletDriver.Daemon/OpenTabletDriver.Daemon.csproj" />
+    <PackageReference Include="Avalonia.Desktop" Version="$(AvaloniaVersion)" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="$(AvaloniaVersion)" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="$(AvaloniaVersion)" />
+    <AvaloniaResource Include="Assets/app.ico" />
+    <AvaloniaResource Include="Assets/app.png" />
+    <EmbeddedResource Include="Localization/*.json" />
+    <EmbeddedResource Include="../LICENSE" LogicalName="LICENSE" />
+  </ItemGroup>
+</Project>
